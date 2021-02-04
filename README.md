@@ -8,7 +8,7 @@ Onder Linux of MacOS kan gebruik worden gemaakt van ESPTool.py.
 Het flashen
 De software waarmee de D1 wordt geflasht wordt gedownload vanaf de site van ESP-Easy. 
 
-Download versie 2.0 hier en pak het zip-bestand uit in een directory naar keuze.
+Download esp-easy en pak het zip-bestand uit in een directory naar keuze.
 https://github.com/letscontrolit/ESPEasy/releases
 
 Koppel de D1 met een micro-USB kabel aan je computer.
