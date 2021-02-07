@@ -12,12 +12,25 @@ WiFiServer server(80);
 String header;
 
 //default custom static IP
-char static_ip[16] = "192.168.10.135";
+char static_ip[16] = "192.168.10.137";
 char static_gw[16] = "192.168.10.1";
 char static_sn[16] = "255.255.255.0";
 String localIP;
 String gatewayIP;
 String subnetMask ;
+
+//domoticz
+int domoticzWaterFlowIdx = 0;
+int domoticzWaterCountIdx = 0;
+char dompass[40] = "";
+char domname[40] = "";
+char domoticzIP[16] = "192.168.10.185";
+char domoticzPort[20] = "8080";
+char domoticzFlowIDX[20] = "161";
+char domoticzQuantityIDX[20] = "162";
+bool domEnable = false;
+int  numberofpulses = 0;
+
 
 int totalwaterquantity = 1031251;
 const char* filename = "/lastvalue.txt";
@@ -25,36 +38,27 @@ int minuteflowString = 0;
 
 
 //watermeter
-int Pulses = D2;            // D2
+int Pulse2 = D2;            // D1
+
 int waterflow =1;
 bool newpulse = true;
-bool pulsedivider = false;
 int inputValue2 = 0;
 int pulsecount; //Variable to count number of pulses 
 
 bool reset1 = false;
 bool reset2 = false;
 
-
 unsigned long startMillis;  //some global variables available anywhere in the program
 unsigned long startMillis2;  //some global variables available anywhere in the program
 unsigned long startMillis3;  //some global variables available anywhere in the program
 unsigned long currentMillis;
 unsigned long currentMillis2;
-
 unsigned long period = 30*1000;  //time between pulses, initial 30s
 unsigned long period2 = 10*60000;  //time between saving of the total quantity to SPIFF, , initial 10 min
-
 unsigned long timebetweenmillis; 
 
 //flag for saving data
 bool shouldSaveConfig = false;
-
-//callback notifying us of the need to save config
-void saveConfigCallback () {
-  Serial.println("Should save config");
-  shouldSaveConfig = true;
-}
 
 void setup() {
   startMillis = millis();
@@ -116,6 +120,19 @@ void setup() {
       json.printTo(Serial);
       if (json.success()) {
         Serial.println("\nparsed json");
+        strcpy(domname, json["domoticzUserName"]);
+        strcpy(dompass, json["domoticzPassWord"]);
+        strcpy(domoticzIP, json["domoticzIP"]);
+        strcpy(domoticzPort, json["domoticzPort"]);
+        strcpy(domoticzFlowIDX, json["domoticzFlowIDX"]);
+        strcpy(domoticzQuantityIDX, json["domoticzQuantityIDX"]);
+        
+        if(json["domEnable"]) {
+            Serial.println("Domoticz Selected");
+            domEnable=true;
+          } else{
+            Serial.println("Domoticz not Selected");
+          }        
         if(json["ip"]) {
           Serial.println("setting custom ip from config");
           strcpy(static_ip, json["ip"]);
@@ -133,6 +150,18 @@ void setup() {
 
   //end wifi
   Serial.println(static_ip);
+  WiFiManagerParameter custom_text1("<p>Select Checkbox for Domoticz");
+  WiFiManagerParameter custom_domEnable("Domoticz", "Domoticz enable", "T", 2, "type=\"checkbox\" ");
+  WiFiManagerParameter custom_text2("Domoticz parameters:");
+  WiFiManagerParameter custom_domoticzUserName("Name", "Dom. User (empty for none)", domname, 40);
+  WiFiManagerParameter custom_domoticzPassWord("Pass", "Dom. Pass (empty for none)", dompass, 40);
+  WiFiManagerParameter custom_domoticzadress("domIP", "Domoticz IP Adress", domoticzIP, 40);
+  WiFiManagerParameter custom_domoticzPort("domPort", "Domoticz  Port (8080)", domoticzPort, 40);
+  WiFiManagerParameter custom_domoticzFlowIDX("domFlow", "Domoticz Flow IDX", domoticzFlowIDX, 20);
+  WiFiManagerParameter custom_domoticzQuantityIDX("domQuantity", "Domoticz Quantity IDX", domoticzQuantityIDX, 20);
+  WiFiManagerParameter custom_emptyLine(" <br>");
+  WiFiManagerParameter custom_text3("<p>Select Static IP adress:");
+
   WiFiManager wifiManager;
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   
@@ -140,9 +169,21 @@ void setup() {
   _ip.fromString(static_ip);
   _gw.fromString(static_gw);
   _sn.fromString(static_sn);
+  wifiManager.setMinimumSignalQuality();
 
   wifiManager.setSTAStaticIPConfig(_ip, _gw, _sn);
-  wifiManager.setMinimumSignalQuality();
+  wifiManager.addParameter(&custom_emptyLine);
+  wifiManager.addParameter(&custom_text1);
+  wifiManager.addParameter(&custom_domEnable);
+  wifiManager.addParameter(&custom_text2);
+  wifiManager.addParameter(&custom_domoticzadress);
+  wifiManager.addParameter(&custom_domoticzPort);
+  wifiManager.addParameter(&custom_domoticzUserName);
+  wifiManager.addParameter(&custom_domoticzPassWord);
+  wifiManager.addParameter(&custom_domoticzFlowIDX);
+  wifiManager.addParameter(&custom_domoticzQuantityIDX);
+  wifiManager.addParameter(&custom_emptyLine);
+  wifiManager.addParameter(&custom_text3);
 
   if (!wifiManager.autoConnect("AutoConnectAP", "")) {
     Serial.println("failed to connect and hit timeout");
@@ -153,12 +194,25 @@ void setup() {
   }
 
   Serial.println("connected...yeey :)");
+  strcpy(domoticzIP, custom_domoticzadress.getValue());
+  strcpy(domoticzPort, custom_domoticzPort.getValue());
+  strcpy(domname, custom_domoticzUserName.getValue());
+  strcpy(dompass, custom_domoticzPassWord.getValue());
+  strcpy(domoticzFlowIDX, custom_domoticzFlowIDX.getValue());
+  strcpy(domoticzQuantityIDX, custom_domoticzQuantityIDX.getValue());
+  domEnable = (strncmp(custom_domEnable.getValue(), "T", 1) == 0);
 
   if (shouldSaveConfig) {
     Serial.println("saving config");
     DynamicJsonBuffer jsonBuffer;
     JsonObject& json = jsonBuffer.createObject();
-
+    json["domEnable"] = domEnable;
+    json["domoticzUserName"] = domname;
+    json["domoticzPassWord"] = dompass;
+    json["domoticzIP"] = domoticzIP;
+    json["domoticzPort"] = domoticzPort;
+    json["domoticzFlowIDX"] = domoticzFlowIDX;
+    json["domoticzQuantityIDX"] = domoticzQuantityIDX;
     json["ip"] = WiFi.localIP().toString();
     json["gateway"] = WiFi.gatewayIP().toString();
     json["subnet"] = WiFi.subnetMask().toString();
@@ -183,12 +237,50 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   // Pull-up to prevent "floating" input for watersensor
-  pinMode(Pulses, INPUT_PULLUP); 
+  pinMode(Pulse2, INPUT_PULLUP);
   pinMode(BUILTIN_LED, OUTPUT);
 
   server.begin();
   
 }
+
+//callback notifying us of the need to save config
+void saveConfigCallback() {
+  Serial.println("Should save config");
+  shouldSaveConfig = true;
+}
+
+
+bool SendCommandToDomo(String domcommand){
+  HTTPClient http;
+  bool retVal = false;
+  String url = "http://" + String(domoticzIP) + ":" + String(domoticzPort) + "/" + String(domcommand);;
+  if (String(dompass) == ""){//without password
+    url = "http://" + String(domoticzIP) + ":" + String(domoticzPort) + "/" + String(domcommand);
+  }else{
+    
+    url = "http://" + String(domname) + ":" + String(dompass)+ "@" + String(domoticzIP) + ":" + String(domoticzPort) + "/" + String(domcommand);
+  }
+  Serial.print(url);
+  http.begin(url); //HTTP
+  int httpCode = http.GET();
+  if (httpCode > 0)
+  { // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTP] GET... code: %d\n", httpCode);
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      retVal = true;
+    }
+  }
+  else
+  {
+    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+  }
+  http.end();
+  return retVal;
+}
+
+
 
 void writeTotal(){
   //write file data
@@ -207,8 +299,9 @@ void writeTotal(){
 }
 
 void watermeter() {
-  inputValue2 = digitalRead(Pulses);
-  if (inputValue2 == 1) {
+  //inputValue2 = digitalRead(Pulse1) + digitalRead(Pulse2) + digitalRead(Pulse3) + digitalRead(Pulse4);
+  inputValue2 = digitalRead(Pulse2);
+  if (inputValue2 >= 1) {
     newpulse = true;
   }
   if ((inputValue2 == 0) && (newpulse == true)) {
@@ -216,11 +309,28 @@ void watermeter() {
     totalwaterquantity = totalwaterquantity + 1;
     timebetweenmillis = millis() - startMillis2;  //initial start time
     waterflow = 60000/timebetweenmillis;
+    if(domEnable){
+      String newcommand = "json.htm?type=command&param=udevice&idx=" + String(domoticzFlowIDX) + "&nvalue=0&svalue=" + String(waterflow);
+      SendCommandToDomo(newcommand);
+    }    
     minuteflowString = waterflow;
     startMillis2 = millis();
     String flowtext = "actual Flow: ";
     flowtext += waterflow;
     Serial.println(flowtext);
+    if(domEnable){
+      if (numberofpulses >=10){
+          Serial.println("Pulses has reached 10 so sending total");
+          //String newcommand = "json.htm?type=command&param=udevice&idx=" + String(domoticzQuantityIDX) + "&nvalue=0&svalue=1";
+          //SendCommandToDomo(newcommand);
+          String newcommand = "json.htm?type=command&param=udevice&idx=" + String(domoticzQuantityIDX) + "&nvalue=0&svalue=" + String(totalwaterquantity);
+          SendCommandToDomo(newcommand);
+          numberofpulses=1;
+      }
+      else{
+        numberofpulses++;
+      }
+    }
     pulsecount++; //Increment the variable on every pulse
     newpulse = false;
   }
@@ -353,11 +463,13 @@ void webserver(){
     // Clear the header variable
     header= "";
     // Close the connection
+    client.flush();
     client.stop();
     Serial.println("Client disconnected.");
     Serial.println("");
   }
 }  
+
 
 void loop() {
   webserver();
@@ -377,11 +489,16 @@ void loop() {
 
   currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
   if (currentMillis - startMillis >= period) { //test whether the pulsetime has eleapsed
-      String minuteflowtext = "actual Flow this minute: ";
+      String minuteflowtext = "actual Flow this last 30s: ";
       minuteflowString = pulsecount;
+      if(domEnable){
+        String newcommand = "json.htm?type=command&param=udevice&idx=" + String(domoticzFlowIDX) + "&nvalue=0&svalue=" + String(minuteflowString);
+        SendCommandToDomo(newcommand);
+      } 
       pulsecount = 0;  //Start counting from 0 again
       startMillis = currentMillis; 
   }
+  
 
   // save total to SPIFF
   currentMillis2 = millis();  //get the current "time" (actually the number of milliseconds since the program started)
