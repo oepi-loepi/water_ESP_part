@@ -16,7 +16,6 @@ Neem hiervoor een kwalitatief goede kabel, om problemen tijdens het flashen te v
 In Windows 8 en hoger wordt de D1 normaal gesproken herkend en worden de drivers automatisch geladen. Is dat niet het geval, dan kan je hier de juiste USB-drivers dowloaden en dan installeren. Daarna zou het herkennen wel moeten lukken.
 
 De D1 wordt aan de pc gekoppeld als com-poort. Kijk in Device Manager (Apparatenbeheer) van Windows welke COM poort in gebruik is genomen door de D1.
-Dit is meestal het hoogste nummer (in dit voorbeeld COM3).
 De aanduiding CH340 zal bij de gezochte poort staan.
 
 Zoek in de directory waarin de ESPEasy software is uitgepakt naar FlashESP8266.exe en start dit programma.
