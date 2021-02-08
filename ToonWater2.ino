@@ -357,22 +357,28 @@ void webserver(){
             newjson += "\"}";
              
             if (currentLine.length() == 0) { 
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:text/html");
-              client.println("Connection: close");
-              client.println();
+              //client.println("HTTP/1.1 200 OK");
+              //client.println("Content-type:text/html");
+              //client.println("Connection: close");
+              //client.println();
               
               // Display the HTML web page
-              client.println("<!DOCTYPE html><html>");
-              client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-              client.println("<link rel=\"icon\" href=\"data:,\">");
-              client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-              client.println(".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;");
-              client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-              client.println(".button2 {background-color: #77878A;}</style></head>");
-              
-              client.println("<body><h1>Toon WaterMeter</h1>");
-              client.println("<p></p>");
+              if ((header.indexOf("GET /") >= 0) && (header.indexOf("GET /setnew") <0) && (header.indexOf("GET /json.html") <0) && (header.indexOf("GET /water.html") <0)) {
+                client.println("HTTP/1.1 200 OK");
+                client.println("Content-type:text/html");
+                client.println("Connection: close");
+                client.println("");
+                client.println("<!DOCTYPE html><html>");
+                client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+                client.println("<link rel=\"icon\" href=\"data:,\">");
+                client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+                client.println(".button { background-color: #195B6A; border: none; color: white; padding: 16px 40px;");
+                client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+                client.println(".button2 {background-color: #77878A;}</style></head>");
+                
+                client.println("<body><h1>Toon WaterMeter</h1>");
+                client.println("<p></p>");
+              }
 
               if ((header.indexOf("GET /") >= 0) && (header.indexOf("GET /reset/") <0) && (header.indexOf("GET /setnew") <0) && (header.indexOf("GET /json.html") <0) && (header.indexOf("GET /water.html") <0)) {
                 client.println("<p>" +newjson + "</p>");
@@ -412,11 +418,11 @@ void webserver(){
             }
 
             if (header.indexOf("GET /water.html") >=0) { 
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:text/html");
-              client.println("Connection: close");
-              client.println("");
-              client.println(newjson);
+                client.println("HTTP/1.1 200 OK");
+                client.println("Content-type:text/html");
+                client.println("Connection: close");
+                client.println("");
+                client.println(newjson);
             }
 
            if (header.indexOf("GET /setnew") >= 0) {
@@ -435,19 +441,19 @@ void webserver(){
             }
 
            if (header.indexOf("GET /json.html") >= 0) {
-              Serial.println("Client request");
-              String jsoncontent;
-              StaticJsonBuffer<200> jsonBuffer;
-              JsonObject& json = jsonBuffer.createObject();
-              json["waterflow"] = minuteflowString;
-              json["waterquantity"] = totalwaterquantity;
-              json.prettyPrintTo(Serial);
-              json.printTo(jsoncontent);
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:text/html");
-              client.println("Connection: close");
-              client.println("");
-              client.println(jsoncontent);
+               Serial.println("Client request");
+               String jsoncontent;
+               StaticJsonBuffer<200> jsonBuffer;
+                JsonObject& json = jsonBuffer.createObject();
+                json["waterflow"] = minuteflowString;
+                json["waterquantity"] = totalwaterquantity;
+                json.prettyPrintTo(Serial);
+                json.printTo(jsoncontent);
+                client.println("HTTP/1.1 200 OK");
+                client.println("Content-type:text/html");
+                client.println("Connection: close");
+                client.println("");
+                client.println(jsoncontent);
             }
 
             // Break out of the while loop
