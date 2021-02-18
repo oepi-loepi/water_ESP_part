@@ -6,7 +6,9 @@ De beschrijving hieronder is voor een computer die draait onder Windows.
 Onder Linux of MacOS kan gebruik worden gemaakt van ESPTool.py.
 
 Het flashen
-De software waarmee de D1 wordt geflasht wordt gedownload vanaf de site van ESP-Easy. 
+De software waarmee de D1 wordt geflasht wordt gedownload vanaf de site van ESP-Easy.
+
+Heeft al eerder software op de ESP gestaan, flash dan eerst de balnco 4MB om ook het interne geheugen helemaal leeg te maken.
 
 Download esp-easy en pak het zip-bestand uit in een directory naar keuze.
 https://github.com/letscontrolit/ESPEasy/releases
