@@ -21,7 +21,7 @@ In Windows 8 en hoger wordt de D1 normaal gesproken herkend en worden de drivers
 De D1 wordt aan de pc gekoppeld als com-poort. Kijk in Device Manager (Apparatenbeheer) van Windows welke COM poort in gebruik is genomen door de D1.
 De aanduiding CH340 zal bij de gezochte poort staan.
 
-Zoek in de directory waarin de ESPEasy software is uitgepakt naar FlashESP8266.exe en start dit programma.
+Zoek in de directory waarin de ESPEasy software is uitgepakt naar FlashESP8266.exe en start dit programma. Laat de folder intact en verplaats de gedownloade bin naar de folder.
 Kies bij COM-Port de opgezochte poort (zie boven) en kies bij Firmware voor de .bin file uit deze Git.
 Start de flashtool met de knop ‘Flash’. Als alles goed is gegaan verschijnt er een commandovenster en wordt de ESP8266 geflasht.
 Zodra het flashen is geëindigd, dan wordt dit door de software gemeld.
